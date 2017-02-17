@@ -6,6 +6,7 @@ import tornado.ioloop
 import tornado.web
 import tornado.httpserver
 import tornado.netutil
+import measurestats
 
 sys.path.append('/handler')
 import lambda_func # assume submitted .py file is /handler/lambda_func
@@ -30,6 +31,18 @@ def init():
         port = config.get('rethinkdb.port', 28015)
         print 'Connect to %s:%d' % (host, port)
         db_conn = rethinkdb.connect(host, port)
+	try:
+		rethink.db_create('stats').run(db_conn)
+	except:
+		pass
+	try: 
+		rethink.db('stats').table_create('lambdaexec',primary_key='ID').run(db_conn)
+	except:
+		pass
+	try:
+		rethink.db('stats').table_create('lambdaIO',primary_key='ID').run(db_conn)
+	except:
+		pass
     initialized = True
 
 # catch everything
@@ -44,7 +57,8 @@ def flask_post(path):
             event = json.loads(data)
         except:
             return ('bad POST data: "%s"'%str(data), 400)
-        return json.dumps(lambda_func.handler(db_conn, event))
+        ID = int(1000*time.time())
+		return json.dumps(measurestats.measure_cpu(db_conn, event, ID))
     except Exception:
         return (traceback.format_exc(), 500) # internal error
 

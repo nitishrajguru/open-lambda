@@ -1,0 +1,58 @@
+<html>
+
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+
+  <script src="getDetails.js"></script>
+  <link rel="stylesheet" href="ui.css">
+</head>
+
+<body>
+<h1>Details</h1>
+<br/>
+<div id = "comments">
+<br/>
+<div id = "jobDescription">
+<h2>CPU and Memory Utilization</h2>
+<table id = "descTable">
+  <tr>
+      <th>CPU Utilization</th>
+      <th>Memory Usage(bytes)</th>
+  </tr>
+</table>
+<h2>Network Utilization(bytes)</h2>
+<table id = "networkTable">
+    <tr>
+        <th>Sent</th>
+        <th>Received</th>
+    </tr>
+</table>
+<h2>IO Utilization(bytes)</h2>
+<table id = "ioTable">
+    <tr>
+        <th>Read</th>
+        <th>Write</th>
+    </tr>
+</table>
+<h2>Lambdas Executed</h2>
+<table id = "lambdaTable">
+    <tr>
+        <th>Job ID</th>
+        <th>Completion time</th>
+        <th>Lambda ID</th>
+    </tr>
+</table>
+<h2>DB Interactions</h2>
+<table id = "dbTable">
+    <tr>
+        <th>Completion time</th>
+        <th>Read</th>
+        <th>Write</th>
+    </tr>
+</table>
+</div>
+<br/>
+
+</body>
+
+</html>
