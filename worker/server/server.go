@@ -7,11 +7,13 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/open-lambda/open-lambda/worker/config"
 	"github.com/open-lambda/open-lambda/worker/handler"
+	mc "github.com/open-lambda/open-lambda/worker/metrics"
 	sbmanager "github.com/open-lambda/open-lambda/worker/sandbox-manager"
 )
 
@@ -81,7 +83,6 @@ func (s *Server) ForwardToSandbox(handler *handler.Handler, r *http.Request, inp
 	// request and response respectively.  r2 and w2 are the
 	// sandbox request and response respectively.
 	url := fmt.Sprintf("%s%s", channel.Url, r.URL.Path)
-
 	// TODO(tyler): some sort of smarter backoff.  Or, a better
 	// way to detect a started sandbox.
 	max_tries := 10
@@ -96,7 +97,25 @@ func (s *Server) ForwardToSandbox(handler *handler.Handler, r *http.Request, inp
 
 		r2.Header.Set("Content-Type", r.Header.Get("Content-Type"))
 		client := &http.Client{Transport: &channel.Transport}
+
+		start := time.Now()
 		w2, err := client.Do(r2)
+		elapsed := time.Since(start)
+
+		var name = strings.TrimPrefix(r.URL.Path, "/runLambda/")
+		var mem_file = "/sys/fs/cgroup/memory/docker/" + mc.GetContainerId(name) + "/memory.usage_in_bytes"
+		var file, err1 = os.OpenFile(mem_file, os.O_RDONLY, 0444)
+		if err1 != nil {
+			fmt.Println(err.Error())
+		}
+		defer file.Close()
+
+		buf := make([]byte, 24)
+		var num, err2 = file.Read(buf)
+		if err2 != nil {
+			fmt.Println(err.Error())
+		}
+
 		if err != nil {
 			errors = append(errors, err)
 			if tries == max_tries {
@@ -119,6 +138,7 @@ func (s *Server) ForwardToSandbox(handler *handler.Handler, r *http.Request, inp
 				err.Error(),
 				http.StatusInternalServerError)
 		}
+		mc.StoreMetrics(name, elapsed.String(), string(buf)[0:num])
 		return wbody, w2, nil
 	}
 }
@@ -222,6 +242,7 @@ func getUrlComponents(r *http.Request) []string {
 
 func Main(config_path string) {
 	log.Printf("Parse config\n")
+	mc.Init()
 	conf, err := config.ParseConfig(config_path)
 	if err != nil {
 		log.Fatal(err)

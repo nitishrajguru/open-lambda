@@ -23,6 +23,7 @@ import (
 
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/open-lambda/open-lambda/worker/handler/state"
+	mc "github.com/open-lambda/open-lambda/worker/metrics"
 )
 
 type DockerSandbox struct {
@@ -41,6 +42,9 @@ func NewDockerSandbox(name string, sandbox_dir string, nspid int, container *doc
 		container:   container,
 		client:      client,
 	}
+
+	mc.StoreCidNameMapping(sandbox.name, sandbox.container.ID)
+	log.Printf(mc.GetContainerId(sandbox.name))
 	return sandbox
 }
 

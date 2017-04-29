@@ -163,6 +163,10 @@ func (admin *Admin) new_cluster() error {
 		return err
 	}
 
+	if err := os.Mkdir(path.Join(*args.cluster, "metrics"), 0700); err != nil {
+		return err
+	}
+
 	if err := os.Mkdir(path.Join(*args.cluster, "workers"), 0700); err != nil {
 		return err
 	}
